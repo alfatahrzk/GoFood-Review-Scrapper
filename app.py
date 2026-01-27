@@ -5,12 +5,10 @@ import random
 import re
 import matplotlib.pyplot as plt
 import seaborn as sns
-import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium_stealth import stealth
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
@@ -23,46 +21,16 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- FUNGSI UTAMA (CACHE & LOGIC) ---
+# --- FUNGSI UTAMA ---
 
-# 1. Setup Driver
+# 1. Setup Driver (Versi Local/Laptop)
 def setup_driver():
     chrome_options = Options()
-    
-    # 1. Mode Headless (Wajib nang Cloud)
-    chrome_options.add_argument("--headless=new")
+    # chrome_options.add_argument("--headless") # Un-comment lek pengen gak metu browser e
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1920,1080")
-    
-    # 2. User Agent Paling Umum
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-    
-    # 3. Matikan deteksi Automation
-    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    chrome_options.add_experimental_option("useAutomationExtension", False)
-
-    try:
-        # Cloud Path
-        service = Service("/usr/bin/chromedriver")
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-    except:
-        # Local Path
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-    
-    # 4. AKTIFKAN MODE STEALTH (JURUS TERAKHIR)
-    # Iki ngganti properti browser ben koyok PC tenanan
-    stealth(driver,
-        languages=["en-US", "en"],
-        vendor="Google Inc.",
-        platform="Win32",
-        webgl_vendor="Intel Inc.",
-        renderer="Intel Iris OpenGL Engine",
-        fix_hairline=True,
-    )
-    
+    chrome_options.add_argument("--start-maximized")
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     return driver
 
 # 2. Fungsi Normalisasi Teks
@@ -113,24 +81,10 @@ def load_more_reviews(driver, max_clicks):
 # 4. Fungsi Scraper Inti
 def scrape_data(driver):
     all_reviews = []
-
-    time.sleep(5)
-
     cards = driver.find_elements(By.XPATH, "//div[./div[contains(@class, 'flex items-center')]]")
-
-    # --- TAMBAHAN DEBUGGING ---
-    if len(cards) == 0:
-        st.warning("⚠️ Tidak ditemukan elemen ulasan. Mengambil screenshot layar...")
-        # Cekrek! Simpan bukti
-        driver.save_screenshot("debug_screen.png")
-        st.image("debug_screen.png", caption="Tampilan Layar Server saat Error")
-        st.text(driver.page_source[:1000]) # Tampilkan sithik kode HTML-e
-    # --------------------------
-
+    
     progress_bar = st.progress(0)
     total_cards = len(cards)
-    status_extract = st.empty()
-    status_extract.write(f"Menemukan {total_cards} elemen ulasan. Mengekstrak data...")
     
     for i, card in enumerate(cards):
         try:
@@ -173,7 +127,7 @@ def scrape_data(driver):
 
 # --- UI STREAMLIT ---
 
-st.title("🕵️‍♂️ GoFood Review Scraper Pro")
+st.title("🕵️‍♂️ GoFood Review Scraper Pro (Local)")
 st.markdown("Aplikasi scraping ulasan GoFood dengan fitur **Analisis Sentimen & Menu Terlaris**.")
 
 # SIDEBAR PENGATURAN
@@ -200,42 +154,56 @@ with st.sidebar:
 if start_btn and target_url:
     st.divider()
     
-    with st.spinner("Sedang membuka browser..."):
+    with st.spinner("Membuka browser..."):
         driver = setup_driver()
         
     try:
         driver.get(target_url)
-        st.success("Terkoneksi ke GoFood! Memulai proses load...")
         
-        # --- UPDATE 1: AMBIL NAMA RESTO ---
+        # --- UPDATE 1: AMBIL NAMA & TAMPILKAN DI UI ---
         try:
-            # Coba ambil elemen H1 (biasane jeneng resto)
-            resto_name_raw = driver.find_element(By.TAG_NAME, "h1").text
+            # Cara 1: Tembak langsung H1 sing duwe class 'gf-heading-xl' (Sesuai temuanmu)
+            resto_name_real = driver.find_element(By.CSS_SELECTOR, "h1.gf-heading-xl").text
         except:
-            # Lek gagal, ambil Title halaman
-            resto_name_raw = driver.title
+            try:
+                # Cara 2: Tembak H1 sembarang (Cadangan)
+                resto_name_real = driver.find_element(By.TAG_NAME, "h1").text
+            except: 
+                # Cara 3: Lek gagal kabeh, jupuk Title Browser
+                resto_name_real = driver.title
 
-        # Bersihkan nama file (buang karakter aneh kayak / : * ? " < > |)
-        clean_resto_name = re.sub(r'[\\/*?:"<>|]', "", resto_name_raw)
-        # Ganti spasi dadi underscore biar rapi
-        clean_resto_name = clean_resto_name.replace(" ", "_")
+        # Tampilkan Pesan Sukses Terkoneksi
+        st.success(f"✅ Terkoneksi ke: **{resto_name_real}**")
+        st.info("Sedang memuat ulasan, mohon tunggu sebentar...")
+        # ---------------------------------------------
         
-        # Simpan nang session state
-        st.session_state['resto_filename'] = f"Review_{clean_resto_name}.csv"
-        # ----------------------------------
+        # Siapkan nama file
+        clean_name = re.sub(r'[\\/*?:"<>|]', "", resto_name_real).replace(" ", "_")
+        st.session_state['resto_filename'] = f"Review_{clean_name}.csv"
         
+        # Proses Load More
         load_more_reviews(driver, max_clicks)
         
-        st.info("Sedang membaca data HTML...")
+        st.text("Mengekstrak data dari halaman...")
         df = scrape_data(driver)
         driver.quit()
         
         if not df.empty:
+            # Cleaning Duplikat
             df = df.sort_values(by=['review'], na_position='last')
             df = df.drop_duplicates(subset=['name', 'user_since'], keep='first')
             
+            # --- UPDATE 2: NAMBAH KOLOM NAMA RESTO DI CSV ---
+            # Nambah kolom 'restaurant_name' ing ngarep dhewe utawa mburi
+            df['restaurant_name'] = resto_name_real
+            
+            # Pindah kolom 'restaurant_name' dadi kolom pertama (Opsional, ben rapi)
+            cols = ['restaurant_name'] + [c for c in df.columns if c != 'restaurant_name']
+            df = df[cols]
+            # ------------------------------------------------
+            
             st.session_state['data_hasil'] = df
-            st.success(f"Selesai! Berhasil mengambil {len(df)} data dari **{resto_name_raw}**.")
+            st.success(f"Selesai! Berhasil mengambil {len(df)} data.")
         else:
             st.error("Gagal mengambil data. Pastikan link benar.")
             
@@ -246,26 +214,22 @@ if start_btn and target_url:
 # TAMPILKAN DASHBOARD
 if 'data_hasil' in st.session_state:
     df = st.session_state['data_hasil']
-    
-    # Ambil nama file sing wis disimpen
     nama_file_download = st.session_state.get('resto_filename', 'gofood_data.csv')
     
     st.divider()
-    st.header("📊 Analisis Data")
+    st.header(f"📊 Analisis: {df['restaurant_name'].iloc[0]}")
     
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Rating Rata-rata", f"{df['rating'].mean():.2f} ⭐")
     c2.metric("Total Review", len(df))
     c3.metric("Review Teks", df['review'].notna().sum())
     
-    # --- UPDATE 2: TOMBOL DOWNLOAD DINAMIS ---
     c4.download_button(
         f"📥 Download CSV",
         df.to_csv(index=False).encode('utf-8'),
-        nama_file_download, # <--- Iki wis otomatis jeneng resto
+        nama_file_download,
         "text/csv"
     )
-    # -----------------------------------------
     
     tab1, tab2, tab3, tab4 = st.tabs(["Grafik Rating", "🏆 Top Menu", "Word Cloud", "Tabel Data"])
     
@@ -286,7 +250,7 @@ if 'data_hasil' in st.session_state:
             st.pyplot(fig2)
 
     with tab2:
-        st.subheader("Menu Paling Laris (Berdasarkan Review) 🍗")
+        st.subheader("Menu Paling Laris")
         if 'items_ordered' in df.columns and df['items_ordered'].notna().sum() > 0:
             items_series = df['items_ordered'].dropna()
             all_items = items_series.str.split(' - ').explode()
