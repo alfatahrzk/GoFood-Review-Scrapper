@@ -5,4 +5,3 @@ webdriver-manager
 matplotlib
 seaborn
 wordcloud
-os
