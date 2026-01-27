@@ -1,0 +1,8 @@
+streamlit
+pandas
+selenium
+webdriver-manager
+matplotlib
+seaborn
+wordcloud
+os
