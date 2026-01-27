@@ -10,6 +10,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium_stealth import stealth
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
@@ -29,33 +30,38 @@ def setup_driver():
     chrome_options = Options()
     
     # 1. Mode Headless (Wajib nang Cloud)
-    chrome_options.add_argument("--headless=new") # Gunakan mode 'new' sing luwih stabil
+    chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
-    
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-    
     chrome_options.add_argument("--window-size=1920,1080")
     
+    # 2. User Agent Paling Umum
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+    
+    # 3. Matikan deteksi Automation
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option("useAutomationExtension", False)
 
     try:
-        # Coba path Chromium nang Cloud (biasane nang kene)
+        # Cloud Path
         service = Service("/usr/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=chrome_options)
     except:
-        # Fallback gawe Local (Webdriver Manager)
-        try:
-            driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-        except Exception as e:
-            st.error(f"Gagal inisialisasi driver: {e}")
-            return None
-            
-    # Ekstra: Script kanggo ngilangne jejak webdriver
-    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        # Local Path
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    
+    # 4. AKTIFKAN MODE STEALTH (JURUS TERAKHIR)
+    # Iki ngganti properti browser ben koyok PC tenanan
+    stealth(driver,
+        languages=["en-US", "en"],
+        vendor="Google Inc.",
+        platform="Win32",
+        webgl_vendor="Intel Inc.",
+        renderer="Intel Iris OpenGL Engine",
+        fix_hairline=True,
+    )
     
     return driver
 
@@ -107,8 +113,11 @@ def load_more_reviews(driver, max_clicks):
 # 4. Fungsi Scraper Inti
 def scrape_data(driver):
     all_reviews = []
+
+    time.sleep(5)
+
     cards = driver.find_elements(By.XPATH, "//div[./div[contains(@class, 'flex items-center')]]")
-    
+
     # --- TAMBAHAN DEBUGGING ---
     if len(cards) == 0:
         st.warning("⚠️ Tidak ditemukan elemen ulasan. Mengambil screenshot layar...")
