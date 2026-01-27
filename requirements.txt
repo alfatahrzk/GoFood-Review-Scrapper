@@ -5,3 +5,4 @@ webdriver-manager
 matplotlib
 seaborn
 wordcloud
+selenium-stealth
