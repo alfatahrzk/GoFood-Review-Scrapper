@@ -27,26 +27,33 @@ st.set_page_config(
 # 1. Setup Driver
 def setup_driver():
     chrome_options = Options()
-    chrome_options.add_argument("--headless") # WAJIB HEADLESS nang Cloud
+    
+    # --- WAJIB BUAT CLOUD ---
+    chrome_options.add_argument("--headless=new") # Mode headless sing luwih anyar & stabil
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
     
-    # User Agent tetep
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+    # --- TRIK ANTI-DETEKSI (Topeng) ---
+    # 1. Ukuran Layar: Set dadi Full HD ben gak dikira HP kentang/bot
+    chrome_options.add_argument("--window-size=1920,1080")
+    
+    # 2. User Agent: Niru PC Windows beneran
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+    
+    # 3. Matikan fitur "AutomationControlled" (Iki sing marai ketahuan robot)
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option("useAutomationExtension", False)
 
     try:
-        # Coba cara Cloud (Chromium System)
+        # Coba path Chromium nang Cloud
         service = Service("/usr/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=chrome_options)
     except:
-        # Fallback cara Laptop (Webdriver Manager)
-        try:
-            driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-        except Exception as e:
-            st.error(f"Gagal inisialisasi driver: {e}")
-            return None
-            
+        # Fallback gawe Local
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+        
     return driver
 
 # 2. Fungsi Normalisasi Teks
