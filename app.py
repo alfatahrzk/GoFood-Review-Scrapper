@@ -106,6 +106,15 @@ def scrape_data(driver):
     all_reviews = []
     cards = driver.find_elements(By.XPATH, "//div[./div[contains(@class, 'flex items-center')]]")
     
+    # --- TAMBAHAN DEBUGGING ---
+    if len(cards) == 0:
+        st.warning("⚠️ Tidak ditemukan elemen ulasan. Mengambil screenshot layar...")
+        # Cekrek! Simpan bukti
+        driver.save_screenshot("debug_screen.png")
+        st.image("debug_screen.png", caption="Tampilan Layar Server saat Error")
+        st.text(driver.page_source[:1000]) # Tampilkan sithik kode HTML-e
+    # --------------------------
+
     progress_bar = st.progress(0)
     total_cards = len(cards)
     status_extract = st.empty()
