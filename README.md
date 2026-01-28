@@ -1,35 +1,96 @@
-# 🍔 GoFood Review Intelligence & Scraper
+# 📊 GoReview Analytics
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
-![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
-![Selenium](https://img.shields.io/badge/Scraping-Selenium-green)
+![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red)
+![AI Model](https://img.shields.io/badge/Model-Maestro-purple)
+![Scikit-Learn](https://img.shields.io/badge/Library-Scikit--Learn-orange)
 
-An advanced web application to scrape, analyze, and visualize customer reviews from **GoFood** in real-time. This tool helps business owners and data analysts uncover hidden insights, track top-selling menu items, and monitor customer sentiment without manual data entry.
+**GoReview Analytics** is an end-to-end sentiment analysis solution designed for the Food & Beverage industry (specifically **GoFood**). It automates the process of collecting customer reviews and analyzing them using an advanced Hybrid AI model.
 
-## 🚀 Key Features
+Unlike traditional sentiment analysis that relies solely on star ratings, this tool uses the **Maestro Model** to detect the *true* sentiment of customers, uncovering hidden complaints even in 5-star reviews.
 
-* **Dynamic Scraping:** Input any GoFood restaurant URL and scrape reviews instantly.
-* **Smart Load More:** Options to scrape a limited number of reviews (Fast) or **ALL** available reviews (Deep Dive).
-* **Anti-Ghost Logic:** Automatically filters out duplicate and empty review elements caused by HTML loading glitches.
-* **Business Intelligence Dashboard:**
-    * **🏆 Top Menu Analysis:** Visualizes the most frequently purchased items based on receipt data.
-    * **☁️ Word Cloud:** Identifies trending keywords (complaints or compliments) with slang normalization.
-    * **📊 Sentiment Distribution:** Breakdown of customer satisfaction based on ratings.
-* **Dynamic Export:** Download clean datasets as CSV with auto-generated filenames based on the restaurant's name.
+---
 
-## 🛠️ Tech Stack
+## 🧠 Powered by: Maestro Model AI
 
-* **Framework:** Streamlit
-* **Scraping:** Selenium WebDriver (Headless Chrome)
-* **Data Processing:** Pandas, Regex
-* **Visualization:** Matplotlib, Seaborn, WordCloud
-* **Deployment:** Streamlit Cloud (Linux/Debian environment compatibility)
+The core of this application is the **Maestro Model**, a custom-built sentiment classifier that acts as a conductor, harmonizing structured and unstructured data:
+
+1.  **Hybrid Labeling Strategy:**
+    * Instead of blindly trusting the Star Rating, the Maestro calculates a **weighted score**.
+    * `Final Score = (0.6 * Star_Rating) + (0.4 * Text_Lexicon_Score)`
+    * This allows the model to detect anomalies (e.g., sarcasm or "wrong click" 5-star ratings with negative text).
+2.  **N-Gram LinearSVC:**
+    * Uses **Linear Support Vector Classification (SVM)**.
+    * Features **Bigrams** (n-gram range 1,2) to understand context (e.g., distinguishing "Enak" from "Tidak Enak").
+3.  **High Accuracy:**
+    * Current Model Accuracy: **~84.5%**
+    * High Recall on Negative class (87%), ensuring no customer complaint goes unnoticed.
+
+---
+
+## ✨ Key Features
+
+### 1. 🕵️‍♂️ Real-Time Scraping (Local Selenium)
+* **Smart Load More:** Automates clicking the "Load More" button until all reviews are fetched.
+* **Anti-Ghost Logic:** Automatically detects and fixes shifted CSV columns (e.g., when a user's name contains a comma).
+* **Live Feedback:** Shows scraping progress and connects to the restaurant's page instantly.
+
+### 2. 📊 Interactive Dashboard
+* **AI vs. Star Rating:** visual comparison between what the customer *rated* vs. what they *wrote*.
+* **Top Menu Analysis:** Extracts and visualizes the most ordered menu items based on review data.
+* **Word Cloud:** Generates separate word clouds for Positive (Praise) and Negative (Complaints).
+* **Sentiment Metrics:** Counts the exact number of satisfied vs. dissatisfied customers.
+
+### 3. 📥 Data Export
+* Download the scraped and analyzed data as a clean **CSV file** with an auto-generated filename based on the restaurant's name.
+
+---
+
+## 🛠️ Installation & Usage
+
+Since this application uses Selenium for scraping, it is best run **Locally** to avoid IP blocking issues common with cloud servers.
+
+### Prerequisites
+* Python 3.8+
+* Google Chrome Browser
+
+### Steps
+1.  **Clone the Repository**
+    ```bash
+    git clone [https://github.com/your-username/goreview-analytics.git](https://github.com/your-username/goreview-analytics.git)
+    cd goreview-analytics
+    ```
+
+2.  **Install Dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3.  **Run the Application**
+    ```bash
+    streamlit run app.py
+    ```
+
+4.  **Start Analyzing**
+    * The app will open in your browser (`http://localhost:8501`).
+    * Paste a GoFood Restaurant URL.
+    * Click **"Mulai Analisis 🚀"**.
+
+---
 
 ## 📂 Project Structure
 
 ```text
-├── app.py                  # Main application source code
-├── requirements.txt        # Python dependencies
-├── packages.txt            # System dependencies for Streamlit Cloud (Chromium)
-├── README.md               # Documentation
-└── .gitignore              # Files to ignore in git
+├── app.py                      # Main Streamlit Application
+├── model_sentimen_hybrid.pkl   # The trained Maestro Model
+├── requirements.txt            # Python dependencies
+├── README.md                   # Project Documentation
+└── notebooks/                  # (Optional) Jupyter Notebooks used for training
+    ├── 01_Data_Cleaning.ipynb
+    └── 02_Model_Training_Hybrid.ipynb
+
+---
+
+# 🤝 Contribution
+
+Feel free to open an issue or submit a pull request if you have ideas to improve the Maestro Model or the scraper logic!
