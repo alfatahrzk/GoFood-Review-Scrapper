@@ -88,10 +88,3 @@ Since this application uses Selenium for scraping, it is best run **Locally** to
 └── notebooks/                  # (Optional) Jupyter Notebooks used for training
     ├── 01_Data_Cleaning.ipynb
     └── 02_Model_Training_Hybrid.ipynb
-
-
----
-
-# 🤝 Contribution
-
-Feel free to open an issue or submit a pull request if you have ideas to improve the Maestro Model or the scraper logic!
